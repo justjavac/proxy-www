@@ -1,13 +1,11 @@
-const www = new Proxy(() => 'https://www', {
-    get: function get(target, prop) {
-        if (typeof prop !== 'string') { return o; }
-        const hostname = `${target()}.${prop}`;
-        return new Proxy(
-            () => hostname,
-            prop === 'then'
-                ? { apply: (target, thisArg, args) => fetch(target()).then(...args),
-                    get }
-                : { get }
-        );
-    }
-});
+const www = function () {
+    const handlers = {
+        apply: (target, thisArg, args) =>
+            fetch(target()).then(...args),
+        get: (target, key, proxy) =>
+            typeof prop === 'string'
+                ? new Proxy(() => `${target()}.${key}`, handlers)
+                : Reflect.get(target, key, proxy),
+    };
+    return new Proxy(() => 'https://www', handlers);
+}();
