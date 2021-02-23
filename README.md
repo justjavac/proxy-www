@@ -5,15 +5,10 @@
 > 对，学会 Proxy 就可以为所欲为！
 
 ```js
-const www = function () {
-    const handlers = {
-        apply: (target, thisArg, args) =>
-            fetch(target().slice(0, -5)).then(...args),
-        get: (target, key) =>
-            new Proxy(() => `${target()}.${key}`, handlers),
-    };
-    return new Proxy(() => 'https://www', handlers);
-}();
+const www = new Proxy(() => 'https://www', {
+    get (target, key) { return new Proxy(() => `${target()}.${key}`, this); },
+    apply: (target, thisArg, args) => fetch(target().slice(0, -5)).then(...args),
+});
 ```
 
 访问百度
