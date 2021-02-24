@@ -6,8 +6,27 @@
 
 ```js
 const www = new Proxy(() => 'https://www', {
-    get (target, key) { return new Proxy(() => `${target()}.${key}`, this); },
-    apply: (target, thisArg, args) => fetch(target().slice(0, -5)).then(...args),
+    get(target, key) {
+        if (typeof key === 'string') {
+            return new Proxy(() => target() + '.' + key, this);
+        }
+        if (key === Symbol.toPrimitive) {
+            return () => target() + '/';
+        }
+    },
+    apply(target, thisArg, args) {
+        switch (typeof args[0]) {
+            case 'function':
+                return fetch(target().slice(0, -5)).then(...args);
+            case 'object':
+                args = [ String.raw(...args) ];
+            case 'string':
+                return {
+                    [Symbol.toPrimitive]: () => target() + '/' + arg[0],
+                    then: (v, x) => fetch(target() + '/' + arg[0]).then(v, x),
+                };
+        }
+    },
 });
 ```
 
@@ -23,11 +42,17 @@ www.baidu.com.then(response => {
 使用 `async`/`await` 语法：
 
 ```js
-const response = await www.baidu.com
+const response = await www.baidu.com;
 
-console.log(response.ok)
+console.log(response.ok);
 // ==> true
 
 console.log(response.status);
 // ==> 200
+```
+
+带上路径：
+
+```js
+await www.baidu.com`s?wd=justjavac`;
 ```
