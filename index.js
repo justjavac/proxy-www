@@ -12,10 +12,12 @@ const www = new Proxy(() => 'https://www', {
             case 'function':
                 return fetch(target().slice(0, -5)).then(...args);
             case 'object':
-                const rest = String.raw(...args);
-                return { then: () => fetch(target() + '/' + rest).then(...arguments) };
+                args = [ String.raw(...args) ];
             case 'string':
-                return { then: () => fetch(target() + '/' + arg[0]).then(...arguments) };
+                return {
+                    [Symbol.toPrimitive]: () => target() + '/' + arg[0],
+                    then: (v, x) => fetch(target() + '/' + arg[0]).then(v, x),
+                };
         }
     },
 });
