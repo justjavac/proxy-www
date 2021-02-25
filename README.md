@@ -18,7 +18,7 @@ const www = new Proxy(() => 'https://www', {
     apply(target, thisArg, args) {
         switch (typeof args[0]) {
             case 'function':
-                return fetch(target().slice(0, -5)).then(...args);
+                return fetch(target().replace(/\.then$/, '')).then(...args);
             case 'object':
                 args = [ String.raw(...args) ];
             case 'string':
