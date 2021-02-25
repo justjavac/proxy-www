@@ -7,19 +7,22 @@
 ```js
 const www = new Proxy(() => 'https://www', {
     get(target, key, proxy) {
-        return typeof key === 'string' ? new Proxy(() => target() + '.' + key, this) :
-               key === Symbol.toPrimitive ? () => target() + '/' :
+        return typeof key === 'string'
+                   ? new Proxy(() => target() + '.' + key, this) :
+               key === Symbol.toPrimitive
+                   ? () => target() + '/' :
                Reflect.get(target, key, proxy);
     },
     apply(target, thisArg, args) {
         switch (typeof args[0]) {
-            case 'function': return fetch(target().replace(/\.then$/, '')).then(...args);
-            case 'object'  : args = [ String.raw(...args) ];
-            case 'string'  : return {
-                                 [Symbol.toPrimitive]: () => target() + '/' + arg[0],
-                                 then: (v, x) => fetch(target() + '/' + arg[0]).then(v, x),
-                             };
-            default        : return target() + '/';
+            case 'function':
+                return fetch(target().replace(/\.then$/, '')).then(...args);
+            case 'object':
+                const href = target() + '/' + String.raw(...args);
+                return {
+                    [Symbol.toPrimitive]: () => href,
+                    then: (v, x) => fetch(href).then(v, x),
+                };
         }
     },
 });
