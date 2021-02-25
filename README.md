@@ -26,6 +26,8 @@ const www = new Proxy(() => 'https://www', {
                     [Symbol.toPrimitive]: () => target() + '/' + arg[0],
                     then: (v, x) => fetch(target() + '/' + arg[0]).then(v, x),
                 };
+            default:
+                return target();
         }
     },
 });
