@@ -20,7 +20,7 @@ const www = new Proxy(() => 'https://www', {
                     then: (v, x) => fetch(target() + '/' + arg[0]).then(v, x),
                 };
             default:
-                return target();
+                return target() + '/';
         }
     },
 });
