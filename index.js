@@ -1,11 +1,12 @@
 const www = new Proxy(() => 'https://www', {
-    get(target, key) {
+    get(target, key, proxy) {
         if (typeof key === 'string') {
             return new Proxy(() => target() + '.' + key, this);
         }
         if (key === Symbol.toPrimitive) {
             return () => target() + '/';
         }
+        return Reflect.get(target, key, proxy);
     },
     apply(target, thisArg, args) {
         switch (typeof args[0]) {
