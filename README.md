@@ -7,27 +7,19 @@
 ```js
 const www = new Proxy(() => 'https://www', {
     get(target, key, proxy) {
-        if (typeof key === 'string') {
-            return new Proxy(() => target() + '.' + key, this);
-        }
-        if (key === Symbol.toPrimitive) {
-            return () => target() + '/';
-        }
-        return Reflect.get(target, key, proxy);
+        return typeof key === 'string' ? new Proxy(() => target() + '.' + key, this) :
+               key === Symbol.toPrimitive ? () => target() + '/' :
+               Reflect.get(target, key, proxy);
     },
     apply(target, thisArg, args) {
         switch (typeof args[0]) {
-            case 'function':
-                return fetch(target().replace(/\.then$/, '')).then(...args);
-            case 'object':
-                args = [ String.raw(...args) ];
-            case 'string':
-                return {
-                    [Symbol.toPrimitive]: () => target() + '/' + arg[0],
-                    then: (v, x) => fetch(target() + '/' + arg[0]).then(v, x),
-                };
-            default:
-                return target() + '/';
+            case 'function': return fetch(target().replace(/\.then$/, '')).then(...args);
+            case 'object'  : args = [ String.raw(...args) ];
+            case 'string'  : return {
+                                 [Symbol.toPrimitive]: () => target() + '/' + arg[0],
+                                 then: (v, x) => fetch(target() + '/' + arg[0]).then(v, x),
+                             };
+            default        : return target() + '/';
         }
     },
 });
@@ -39,7 +31,7 @@ const www = new Proxy(() => 'https://www', {
 www.baidu.com.then(response => {
     console.log(response.status);
     // ==> 200
-})
+});
 ```
 
 使用 `async`/`await` 语法：
