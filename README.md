@@ -4,6 +4,8 @@
 > 
 > 对，学会 Proxy 就可以为所欲为！
 
+原始来源：https://twitter.com/RReverser/status/1138788910975397888
+
 ```js
 const www = new Proxy(new URL('https://www'), {
     get: function get(target, prop) {
