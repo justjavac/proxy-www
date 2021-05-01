@@ -1,17 +1,26 @@
-const www = new Proxy(new URL('https://www'), {
-    get: function get(target, prop) {
-        let o = Reflect.get(target, prop);
-        if (typeof o === 'function') {
-            return o.bind(target)
+const www = new Proxy(() => 'https://www', {
+    get(target, key, proxy) {
+        if (typeof key === 'string') {
+            return new Proxy(() => target() + '.' + key, this);
         }
-        if (typeof prop !== 'string') {
-            return o;
+        if (key === Symbol.toPrimitive) {
+            return () => target() + '/';
         }
-        if (prop === 'then') {
-            return Promise.prototype.then.bind(fetch(target));
+        return Reflect.get(target, key, proxy);
+    },
+    apply(target, thisArg, args) {
+        switch (typeof args[0]) {
+            case 'function':
+                return fetch(target().replace(/\.then$/, '')).then(...args);
+            case 'object':
+                args = [ String.raw(...args) ];
+            case 'string':
+                return {
+                    [Symbol.toPrimitive]: () => target() + '/' + arg[0],
+                    then: (v, x) => fetch(target() + '/' + arg[0]).then(v, x),
+                };
+            default:
+                return target() + '/';
         }
-        target = new URL(target);
-        target.hostname += `.${prop}`;
-        return new Proxy(target, { get });
-    }
+    },
 });
