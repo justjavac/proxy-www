@@ -4,8 +4,8 @@ const www = new Proxy(new URL('https://www'), {
         if (typeof o === 'function') {
             return o.bind(target)
         }
-        if (typeof prop !== 'string') {
-            return o;
+        if (Reflect.has(target,prop)) {
+            return o
         }
         if (prop === 'then') {
             return Promise.prototype.then.bind(fetch(target));
